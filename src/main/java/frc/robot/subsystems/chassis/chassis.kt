@@ -2,14 +2,10 @@ package frc.robot.subsystems.chassis
 
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrain
-import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants
-import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest
+import com.ctre.phoenix6.swerve.SwerveDrivetrain
+import com.ctre.phoenix6.swerve.SwerveModuleConstants
+import com.ctre.phoenix6.swerve.SwerveRequest
 import com.pathplanner.lib.auto.AutoBuilder
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig
-import com.pathplanner.lib.util.PIDConstants
-import com.pathplanner.lib.util.ReplanningConfig
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.math.geometry.Rotation2d
 import edu.wpi.first.math.kinematics.ChassisSpeeds
@@ -26,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.Subsystem
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
 import frc.robot.classes.TunerConstants
-import org.littletonrobotics.junction.Logger
 import java.util.function.Supplier
 
 /**
