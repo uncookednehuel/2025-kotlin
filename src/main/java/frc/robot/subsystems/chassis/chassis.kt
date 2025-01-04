@@ -3,8 +3,10 @@ package frc.robot.subsystems.chassis
 import com.ctre.phoenix6.SignalLogger
 import com.ctre.phoenix6.Utils
 import com.ctre.phoenix6.swerve.SwerveDrivetrain
+import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants
 import com.ctre.phoenix6.swerve.SwerveModuleConstants
 import com.ctre.phoenix6.swerve.SwerveRequest
+import com.ctre.phoenix6.swerve.SwerveRequest.ApplyRobotSpeeds
 import com.pathplanner.lib.auto.AutoBuilder
 import edu.wpi.first.apriltag.AprilTagFieldLayout
 import edu.wpi.first.math.geometry.Rotation2d
@@ -18,10 +20,9 @@ import edu.wpi.first.wpilibj.RobotController
 import edu.wpi.first.wpilibj.sysid.SysIdRoutineLog
 import edu.wpi.first.wpilibj2.command.Command
 import edu.wpi.first.wpilibj2.command.Commands
-import edu.wpi.first.wpilibj2.command.Subsystem
+import edu.wpi.first.wpilibj2.command.RunCommand
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism
-import frc.robot.classes.TunerConstants
 import java.util.function.Supplier
 
 /**
@@ -31,11 +32,10 @@ import java.util.function.Supplier
 class CommandSwerveDrivetrain(
     driveTrainConstants: SwerveDrivetrainConstants?,
     aprilTagFieldLayout: AprilTagFieldLayout?,
-    vararg modules: SwerveModuleConstants?
-) : SwerveDrivetrain(driveTrainConstants, modules),
-    Subsystem {
-    private var m_simNotifier: Notifier? = null
-    private var m_lastSimTime = 0.0
+    vararg modules: SwerveModuleConstants
+) : SwerveDrivetrain(driveTrainConstants, *modules) {
+    private var simNotifier: Notifier? = null
+    private var lastSimeTime = 0.0
 
     /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
     private val BlueAlliancePerspectiveRotation: Rotation2d = Rotation2d.fromDegrees(0.0)
@@ -46,11 +46,11 @@ class CommandSwerveDrivetrain(
     /* Keep track if we've ever applied the operator perspective before or not */
     private var hasAppliedOperatorPerspective = false
 
-    private val autoRequest: SwerveRequest.ApplyChassisSpeeds = ApplyChassisSpeeds()
+    private val autoRequest: SwerveRequest = ApplyRobotSpeeds()
 
-    private val translationCharacterization: SwerveRequest.SysIdSwerveTranslation = SysIdSwerveTranslation()
-    private val rotationCharacterization: SwerveRequest.SysIdSwerveRotation = SysIdSwerveRotation()
-    private val steerCharacterization: SwerveRequest.SysIdSwerveSteerGains = SysIdSwerveSteerGains()
+    private val translationCharacterization: SwerveRequest.SysIdSwerveTranslation = SwerveRequest.SysIdSwerveTranslation()
+    private val rotationCharacterization: SwerveRequest.SysIdSwerveRotation = SwerveRequest.SysIdSwerveRotation()
+    private val steerCharacterization: SwerveRequest.SysIdSwerveSteerGains = SwerveRequest.SysIdSwerveSteerGains()
 
     /* Use one of these sysidroutines for your particular test */
     var sysIdRoutineTranslation: SysIdRoutine = SysIdRoutine(
@@ -93,8 +93,9 @@ class CommandSwerveDrivetrain(
         configurePathPlanner()
     }
 
+    // Is this silly? TODO
     fun applyRequest(requestSupplier: Supplier<SwerveRequest?>): Command {
-        return run { this.setControl(requestSupplier.get()) }
+        return  RunCommand({ this.setControl(requestSupplier.get()) })
     }
 
     fun sysIdRotation(): Command {
@@ -131,19 +132,19 @@ class CommandSwerveDrivetrain(
     }
 
     private fun startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds()
+        lastSimeTime = Utils.getCurrentTimeSeconds()
 
         /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier =
+        simNotifier =
             Notifier {
                 val currentTime: Double = Utils.getCurrentTimeSeconds()
-                val deltaTime = currentTime - m_lastSimTime
-                m_lastSimTime = currentTime
+                val deltaTime = currentTime - lastSimeTime
+                lastSimeTime = currentTime
 
                 /* use the measured time delta, get battery voltage from WPILib */
                 updateSimState(deltaTime, RobotController.getBatteryVoltage())
             }
-        m_simNotifier!!.startPeriodic(kSimLoopPeriod)
+        simNotifier!!.startPeriodic(kSimLoopPeriod)
     }
 
     private fun configurePathPlanner() {
